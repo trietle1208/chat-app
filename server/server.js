@@ -1,6 +1,9 @@
 const path = require('path');
 const http = require('http');
 const express = require('express');
+
+const {generateMessage, generateLocationMessage} = require('./utils/message');
+
 const socketIO = require('socket.io');
 const { create } = require('domain');
 
@@ -32,21 +35,12 @@ io.on('connection', (socket) => {
       text: "A new user joined",
       createdAt: new Date().getTime()
     })
-  //send an event to client
-  socket.emit('newMessage', {
-    from: "server",
-    text: "Text send to client"
-  });
 
   //take an event from client
   socket.on('createMessage', (message) => {
     console.log("createMessage", message);
     //when using socket, the event just broadcast to specific the client that created the event
-    // socket.emit('newMessage', {
-    //   from: "Admin",
-    //   text: "Welcome to chat app",
-    //   createdAt: new Date().getTime()
-    // })
+    socket.emit('newMessage', generateMessage(message.from, message.text));
 
     //when using io, the event will broadcast to all the clients
 
@@ -62,6 +56,10 @@ io.on('connection', (socket) => {
       text: message.text,
       createdAt: new Date().getTime()
     })
+  });
+
+  socket.on('createLocationMessage', (location) => {
+    socket.broadcast.emit('newMessageLocation', generateLocationMessage("Admin", location.lat, location.long))
   });
 
   socket.on('disconnect', () => {
